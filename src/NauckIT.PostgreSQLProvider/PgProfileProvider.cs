@@ -22,6 +22,10 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// Author: Ernesto Soltero
+// I forked and modified this ASP SQL Provider to suit to our projects need to easily implement Membership and Roles 
+// for our database to suit our needs.
 
 using System;
 using System.Configuration;
@@ -227,7 +231,8 @@ namespace NauckIT.PostgreSQLProvider
         {
             string username = (string)context["UserName"];
             bool isAuthenticated = (bool)context["IsAuthenticated"];
-
+            PgMembershipProvider.ProfileType profileType = (PgMembershipProvider.ProfileType)context["ProfileType"];
+            
             if (string.IsNullOrEmpty(username))
                 return;
 
@@ -235,7 +240,7 @@ namespace NauckIT.PostgreSQLProvider
                 return;
 
             if (!ProfileExists(username))
-                CreateProfileForUser(username, isAuthenticated);
+                CreateProfileForUser(username, isAuthenticated, profileType);
 
             using (NpgsqlConnection dbConn = new NpgsqlConnection(m_connectionString))
             {
@@ -346,7 +351,8 @@ namespace NauckIT.PostgreSQLProvider
         /// </summary>
         /// <param name="username"></param>
         /// <param name="isAuthenticated"></param>
-        private void CreateProfileForUser(string username, bool isAuthenticated)
+        /// <param name="profileType"></param>
+        private void CreateProfileForUser(string username, bool isAuthenticated,  PgMembershipProvider.ProfileType profileType)
         {
             if (ProfileExists(username))
                 throw new ProviderException(string.Format(CultureInfo.InvariantCulture, Properties.Resources.ErrProfileAlreadyExist, username));
@@ -363,6 +369,8 @@ namespace NauckIT.PostgreSQLProvider
                     dbCommand.Parameters.Add("@IsAuthenticated", NpgsqlDbType.Boolean).Value = !isAuthenticated;
                     dbCommand.Parameters.Add("@LastActivityDate", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
                     dbCommand.Parameters.Add("@LastUpdatedDate", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
+                    //Add the profile type
+                    dbCommand.Parameters.Add("@ProfileType", NpgsqlDbType.Integer).Value = profileType;
 
                     try
                     {

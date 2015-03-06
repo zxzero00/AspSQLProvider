@@ -23,7 +23,10 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+//
+// Author: Ernesto Soltero
+// I forked and modified this ASP SQL Provider to suit to our projects need to easily implement Membership and Roles 
+// for our database to suit our needs.
 
 using System;
 using System.Collections.Generic;

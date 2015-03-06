@@ -22,6 +22,10 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// Author: Ernesto Soltero
+// I forked and modified this ASP SQL Provider to suit to our projects need to easily implement Membership and Roles 
+// for our database to suit our needs.
 
 using System;
 using System.Collections.Generic;
@@ -79,7 +83,7 @@ namespace NauckIT.PostgreSQLProvider
             m_passwordStrengthRegularExpression = GetConfigValue(config["passwordStrengthRegularExpression"], "");
             m_enablePasswordReset = Convert.ToBoolean(GetConfigValue(config["enablePasswordReset"], "true"), CultureInfo.InvariantCulture);
             m_enablePasswordRetrieval = Convert.ToBoolean(GetConfigValue(config["enablePasswordRetrieval"], "true"), CultureInfo.InvariantCulture);
-            m_requiresQuestionAndAnswer = Convert.ToBoolean(GetConfigValue(config["requiresQuestionAndAnswer"], "false"), CultureInfo.InvariantCulture);
+            m_requiresQuestionAndAnswer = Convert.ToBoolean(GetConfigValue(config["requiresQuestionAndAnswer"], "true"), CultureInfo.InvariantCulture);
             m_requiresUniqueEmail = Convert.ToBoolean(GetConfigValue(config["requiresUniqueEmail"], "true"), CultureInfo.InvariantCulture);
 
             // Get password encryption type.
@@ -305,10 +309,16 @@ namespace NauckIT.PostgreSQLProvider
                 return false;
         }
 
+        public override MembershipUser CreateUser(string username, string password, string email, string passwordQuestion, string passwordAnswer, bool isApproved, object providerUserKey, out MembershipCreateStatus status)
+        {
+            return CreateUserWithProfileType(username, password, email, passwordQuestion, passwordAnswer, isApproved, providerUserKey, out status, ProfileType.Visitor);
+        }
+
         /// <summary>
         /// MembershipProvider.CreateUser
+        /// This creates the users with an added profile type
         /// </summary>
-        public override MembershipUser CreateUser(string username, string password, string email, string passwordQuestion, string passwordAnswer, bool isApproved, object providerUserKey, out MembershipCreateStatus status)
+        public MembershipUser CreateUserWithProfileType(string username, string password, string email, string passwordQuestion, string passwordAnswer, bool isApproved, object providerUserKey, out MembershipCreateStatus status, ProfileType profileType)
         {
             ValidatePasswordEventArgs args = new ValidatePasswordEventArgs(username, password, true);
 
@@ -373,6 +383,8 @@ namespace NauckIT.PostgreSQLProvider
                         dbCommand.Parameters.Add("@FailedPasswordAttemptWindowStart", NpgsqlDbType.TimestampTZ).Value = createDate;
                         dbCommand.Parameters.Add("@FailedPasswordAnswerAttemptCount", NpgsqlDbType.Integer).Value = 0;
                         dbCommand.Parameters.Add("@FailedPasswordAnswerAttemptWindowStart", NpgsqlDbType.TimestampTZ).Value = createDate;
+                        //type of profile
+                        dbCommand.Parameters.Add("@ProfileType", NpgsqlDbType.Integer).Value = profileType;
 
                         try
                         {
@@ -1604,6 +1616,18 @@ namespace NauckIT.PostgreSQLProvider
         {
             Password,
             PasswordAnswer
+        }
+        
+        //Specifies the type of profile/membership/role of the user
+        public enum ProfileType
+        {
+            Visitor,
+            FoodCritic,
+            Chef,
+            RestaurantOwner,
+            Consumer,
+            Moderator,
+            Admin
         }
         #endregion
     }

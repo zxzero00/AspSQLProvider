@@ -21,6 +21,7 @@ CREATE TABLE "Users" (
 	"FailedPasswordAttemptWindowStart"			timestamptz				NULL,
 	"FailedPasswordAnswerAttemptCount"			integer					NULL,
 	"FailedPasswordAnswerAttemptWindowStart"	timestamptz				NULL,
+	"ProfileType"                               integer                 NOT NULL,
 	CONSTRAINT users_pkey PRIMARY KEY ("pId"),
 	CONSTRAINT users_username_application_unique UNIQUE ("Username", "ApplicationName")
 );
@@ -54,6 +55,7 @@ CREATE TABLE "Profiles" (
 	"IsAnonymous"			boolean					NULL,
 	"LastActivityDate"		timestamptz				NULL,
 	"LastUpdatedDate"		timestamptz				NULL,
+	"ProfileType"           integer                 NOT NULL,
 	CONSTRAINT profiles_pkey PRIMARY KEY ("pId"),
 	CONSTRAINT profiles_username_application_unique UNIQUE ("Username", "ApplicationName"),
 	CONSTRAINT profiles_username_fkey FOREIGN KEY ("Username", "ApplicationName") REFERENCES "Users" ("Username", "ApplicationName") ON DELETE CASCADE
