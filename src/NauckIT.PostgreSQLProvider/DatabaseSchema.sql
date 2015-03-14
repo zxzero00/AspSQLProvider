@@ -3,7 +3,6 @@
 CREATE TABLE "Users" (
 	"pId"										character(36)			NOT NULL,
 	"Username"									character varying(255)	NOT NULL,
-	"ApplicationName"							character varying(255)	NOT NULL,
 	"Email"										character varying(128)	NULL,
 	"Comment"									character varying(128)	NULL,
 	"Password"									character varying(255)	NOT NULL,
@@ -23,7 +22,7 @@ CREATE TABLE "Users" (
 	"FailedPasswordAnswerAttemptWindowStart"	timestamptz				NULL,
 	"ProfileType"                               integer                 NOT NULL,
 	CONSTRAINT users_pkey PRIMARY KEY ("pId"),
-	CONSTRAINT users_username_application_unique UNIQUE ("Username", "ApplicationName")
+	CONSTRAINT users_username_application_unique UNIQUE ("Username")
 );
 
 CREATE INDEX users_email_index ON "Users" ("Email");
@@ -33,17 +32,15 @@ CREATE INDEX users_islockedout_index ON "Users" ("IsLockedOut");
 
 CREATE TABLE "Roles" (
 	"Rolename"				character varying(255)	NOT NULL,
-	"ApplicationName"		character varying(255)	NOT NULL,
-	CONSTRAINT roles_pkey PRIMARY KEY ("Rolename", "ApplicationName")
+	CONSTRAINT roles_pkey PRIMARY KEY ("Rolename")
 );
 
 CREATE TABLE "UsersInRoles" (
 	"Username"				character varying(255)	NOT NULL,
 	"Rolename"				character varying(255)	NOT NULL,
-	"ApplicationName"		character varying(255)	NOT NULL,
-	CONSTRAINT usersinroles_pkey PRIMARY KEY ("Username", "Rolename", "ApplicationName"),
-	CONSTRAINT usersinroles_username_fkey FOREIGN KEY ("Username", "ApplicationName") REFERENCES "Users" ("Username", "ApplicationName") ON DELETE CASCADE,
-	CONSTRAINT usersinroles_rolename_fkey FOREIGN KEY ("Rolename", "ApplicationName") REFERENCES "Roles" ("Rolename", "ApplicationName") ON DELETE CASCADE
+	CONSTRAINT usersinroles_pkey PRIMARY KEY ("Username", "Rolename"),
+	CONSTRAINT usersinroles_username_fkey FOREIGN KEY ("Username") REFERENCES "Users" ("Username") ON DELETE CASCADE,
+	CONSTRAINT usersinroles_rolename_fkey FOREIGN KEY ("Rolename") REFERENCES "Roles" ("Rolename") ON DELETE CASCADE
 );
 
 -- PostgreSQL 8 Profile Provider Schema
@@ -51,14 +48,12 @@ CREATE TABLE "UsersInRoles" (
 CREATE TABLE "Profiles" (
 	"pId"					character(36)			NOT NULL,
 	"Username"				character varying(255)	NOT NULL,
-	"ApplicationName"		character varying(255)	NOT NULL,
 	"IsAnonymous"			boolean					NULL,
 	"LastActivityDate"		timestamptz				NULL,
 	"LastUpdatedDate"		timestamptz				NULL,
-	"ProfileType"           integer                 NOT NULL,
 	CONSTRAINT profiles_pkey PRIMARY KEY ("pId"),
-	CONSTRAINT profiles_username_application_unique UNIQUE ("Username", "ApplicationName"),
-	CONSTRAINT profiles_username_fkey FOREIGN KEY ("Username", "ApplicationName") REFERENCES "Users" ("Username", "ApplicationName") ON DELETE CASCADE
+	CONSTRAINT profiles_username_application_unique UNIQUE ("Username"),
+	CONSTRAINT profiles_username_fkey FOREIGN KEY ("Username") REFERENCES "Users" ("Username") ON DELETE CASCADE
 );
 
 CREATE INDEX profiles_isanonymous_index ON "Profiles" ("IsAnonymous");
@@ -78,7 +73,6 @@ CREATE TABLE "ProfileData" (
 
 CREATE TABLE "Sessions" (
 	"SessionId"				character varying(80)	NOT NULL,
-	"ApplicationName"		character varying(255)	NOT NULL,
 	"Created"				timestamptz				NOT NULL,
 	"Expires"				timestamptz				NOT NULL,
 	"Timeout"				integer					NOT NULL,
@@ -87,5 +81,5 @@ CREATE TABLE "Sessions" (
 	"LockDate"				timestamptz				NOT NULL,
 	"Data"					text					NULL,
 	"Flags"					integer					NOT NULL,
-	CONSTRAINT sessions_pkey PRIMARY KEY ("SessionId", "ApplicationName")
+	CONSTRAINT sessions_pkey PRIMARY KEY ("SessionId")
 );

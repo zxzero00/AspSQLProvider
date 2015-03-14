@@ -69,24 +69,21 @@ namespace NauckIT.PostgreSQLProvider
             // Initialize the abstract base class.
             base.Initialize(name, config);
 
-            m_applicationName = PgMembershipProvider.GetConfigValue(config["applicationName"], HostingEnvironment.ApplicationVirtualPath);
-
             // Get connection string.
             m_connectionString = PgMembershipProvider.GetConnectionString(config["connectionStringName"]);
         }
 
-        /// <summary>
-        /// System.Web.Security.RoleProvider properties.
-        /// </summary>
-        #region System.Web.Security.RoleProvider properties
-        private string m_applicationName = string.Empty;
-
         public override string ApplicationName
         {
-            get { return m_applicationName; }
-            set { m_applicationName = value; }
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
         }
-        #endregion
 
         /// <summary>
         /// System.Web.Security.RoleProvider methods.
@@ -121,11 +118,10 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "INSERT INTO \"{0}\" (\"Username\", \"Rolename\", \"ApplicationName\") Values (@Username, @Rolename, @ApplicationName)", s_userInRolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "INSERT INTO \"{0}\" (\"Username\", \"Rolename\") Values (@Username, @Rolename)", s_userInRolesTableName);
 
                     dbCommand.Parameters.Add("@Username", NpgsqlDbType.Varchar, 255);
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255);
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     NpgsqlTransaction dbTrans = null;
 
@@ -191,10 +187,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "INSERT INTO \"{0}\" (\"Rolename\", \"ApplicationName\") Values (@Rolename, @ApplicationName)", s_rolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "INSERT INTO \"{0}\" (\"Rolename\") Values (@Rolename)", s_rolesTableName);
 
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255).Value = roleName;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     try
                     {
@@ -236,10 +231,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"Rolename\" = @Rolename AND \"ApplicationName\" = @ApplicationName", s_rolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"Rolename\" = @Rolename", s_rolesTableName);
 
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255).Value = roleName;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     NpgsqlTransaction dbTrans = null;
 
@@ -297,11 +291,10 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Username\" FROM \"{0}\" WHERE \"Username\" ILIKE @Username AND \"Rolename\" = @Rolename AND \"ApplicationName\" = @ApplicationName ORDER BY \"Username\" ASC", s_userInRolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Username\" FROM \"{0}\" WHERE \"Username\" ILIKE @Username AND \"Rolename\" = @Rolename ORDER BY \"Username\" ASC", s_userInRolesTableName);
 
                     dbCommand.Parameters.Add("@Username", NpgsqlDbType.Varchar, 255).Value = usernameToMatch;
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255).Value = roleName;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     try
                     {
@@ -346,9 +339,7 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Rolename\" FROM \"{0}\" WHERE \"ApplicationName\" = @ApplicationName ORDER BY \"Rolename\" ASC", s_rolesTableName);
-
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Rolename\" FROM \"{0}\" ORDER BY \"Rolename\" ASC", s_rolesTableName);
 
                     try
                     {
@@ -390,10 +381,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Rolename\" FROM \"{0}\" WHERE \"Username\" = @Username AND \"ApplicationName\" = @ApplicationName ORDER BY \"Rolename\" ASC", s_userInRolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Rolename\" FROM \"{0}\" WHERE \"Username\" = @Username ORDER BY \"Rolename\" ASC", s_userInRolesTableName);
 
                     dbCommand.Parameters.Add("@Username", NpgsqlDbType.Varchar, 255).Value = username;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     try
                     {
@@ -438,10 +428,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Username\" FROM \"{0}\" WHERE \"Rolename\" = @Rolename AND \"ApplicationName\" = @ApplicationName ORDER BY \"Username\" ASC", s_userInRolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Username\" FROM \"{0}\" WHERE \"Rolename\" = @Rolename ORDER BY \"Username\" ASC", s_userInRolesTableName);
 
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255).Value = roleName;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     try
                     {
@@ -484,11 +473,10 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT COUNT(*) FROM \"{0}\" WHERE \"Username\" = @Username AND \"Rolename\" = @Rolename AND \"ApplicationName\" = @ApplicationName", s_userInRolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT COUNT(*) FROM \"{0}\" WHERE \"Username\" = @Username AND \"Rolename\" = @Rolename", s_userInRolesTableName);
 
                     dbCommand.Parameters.Add("@Username", NpgsqlDbType.Varchar, 255).Value = username;
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255).Value = roleName;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     try
                     {
@@ -546,11 +534,10 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"Username\" = @Username AND \"Rolename\" = @Rolename AND \"ApplicationName\" = @ApplicationName", s_userInRolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"Username\" = @Username AND \"Rolename\" = @Rolename", s_userInRolesTableName);
 
                     dbCommand.Parameters.Add("@Username", NpgsqlDbType.Varchar, 255);
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255);
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     NpgsqlTransaction dbTrans = null;
 
@@ -611,10 +598,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT COUNT(*) FROM \"{0}\" WHERE \"Rolename\" = @Rolename AND \"ApplicationName\" = @ApplicationName", s_rolesTableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT COUNT(*) FROM \"{0}\" WHERE \"Rolename\" = @Rolename", s_rolesTableName);
 
                     dbCommand.Parameters.Add("@Rolename", NpgsqlDbType.Varchar, 255).Value = roleName;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     try
                     {

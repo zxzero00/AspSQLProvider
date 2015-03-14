@@ -51,7 +51,6 @@ namespace NauckIT.PostgreSQLProvider
         private const string s_tableName = "Sessions";
         private System.Timers.Timer m_expiredSessionDeletionTimer;
         private string m_connectionString = string.Empty;
-        private string m_applicationName = string.Empty;
         private SessionStateSection m_config = null;
         private bool m_enableExpireCallback = false;
         private SessionStateItemExpireCallback m_expireCallback = null;
@@ -76,8 +75,6 @@ namespace NauckIT.PostgreSQLProvider
 
             // Initialize the abstract base class.
             base.Initialize(name, config);
-
-            m_applicationName = PgMembershipProvider.GetConfigValue(config["applicationName"], HostingEnvironment.ApplicationVirtualPath);
 
             // Get connection string.
             m_connectionString = PgMembershipProvider.GetConnectionString(config["connectionStringName"]);
@@ -215,12 +212,11 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Expires\" = @Expires, \"Locked\" = @Locked WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName AND \"LockId\" = @LockId", s_tableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Expires\" = @Expires, \"Locked\" = @Locked WHERE \"SessionId\" = @SessionId AND \"LockId\" = @LockId", s_tableName);
 
                     dbCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now.Add(m_config.Timeout);
                     dbCommand.Parameters.Add("@Locked", NpgsqlDbType.Boolean).Value = false;
                     dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
                     dbCommand.Parameters.Add("@LockId", NpgsqlDbType.Integer).Value = lockId;
 
                     NpgsqlTransaction dbTrans = null;
@@ -280,10 +276,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName AND \"LockId\" = @LockId", s_tableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"SessionId\" = @SessionId AND \"LockId\" = @LockId", s_tableName);
 
                     dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
                     dbCommand.Parameters.Add("@LockId", NpgsqlDbType.Integer).Value = lockId;
 
                     NpgsqlTransaction dbTrans = null;
@@ -343,11 +338,10 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Expires\" = @Expires WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName", s_tableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Expires\" = @Expires WHERE \"SessionId\" = @SessionId", s_tableName);
 
                     dbCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now.Add(m_config.Timeout);
                     dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     NpgsqlTransaction dbTrans = null;
 
@@ -413,16 +407,14 @@ namespace NauckIT.PostgreSQLProvider
                     if (newItem)
                     {
                         // Delete existing expired session if exist
-                        delCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName", s_tableName);
+                        delCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"SessionId\" = @SessionId", s_tableName);
 
                         delCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                        delCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                         // Insert new session data
-                        dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "INSERT INTO \"{0}\" (\"SessionId\", \"ApplicationName\", \"Created\", \"Expires\", \"Timeout\", \"Locked\", \"LockId\", \"LockDate\", \"Data\", \"Flags\") Values (@SessionId, @ApplicationName, @Created, @Expires, @Timeout, @Locked, @LockId, @LockDate, @Data, @Flags)", s_tableName);
+                        dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "INSERT INTO \"{0}\" (\"SessionId\", \"Created\", \"Expires\", \"Timeout\", \"Locked\", \"LockId\", \"LockDate\", \"Data\", \"Flags\") Values (@SessionId, @Created, @Expires, @Timeout, @Locked, @LockId, @LockDate, @Data, @Flags)", s_tableName);
 
                         dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                        dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
                         dbCommand.Parameters.Add("@Created", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
                         dbCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now.AddMinutes((Double)item.Timeout);
                         dbCommand.Parameters.Add("@Timeout", NpgsqlDbType.Integer).Value = item.Timeout;
@@ -435,13 +427,12 @@ namespace NauckIT.PostgreSQLProvider
                     else
                     {
                         // Update existing session
-                        dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Expires\" = @Expires, \"Locked\" = @Locked, \"Data\" = @Data WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName AND \"LockId\" = @LockId", s_tableName);
+                        dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Expires\" = @Expires, \"Locked\" = @Locked, \"Data\" = @Data WHERE \"SessionId\" = @SessionId AND \"LockId\" = @LockId", s_tableName);
 
                         dbCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now.AddMinutes((Double)item.Timeout);
                         dbCommand.Parameters.Add("@Locked", NpgsqlDbType.Boolean).Value = false;
                         dbCommand.Parameters.Add("@Data", NpgsqlDbType.Text).Value = serializedItems;
                         dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                        dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
                         dbCommand.Parameters.Add("@LockId", NpgsqlDbType.Integer).Value = lockId;
                     }
 
@@ -521,11 +512,10 @@ namespace NauckIT.PostgreSQLProvider
             using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
             {
                 dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture,
-                                                      "INSERT INTO \"{0}\" (\"SessionId\", \"ApplicationName\", \"Created\", \"Expires\", \"Timeout\", \"Locked\", \"LockId\", \"LockDate\", \"Data\", \"Flags\") Values (@SessionId, @ApplicationName, @Created, @Expires, @Timeout, @Locked, @LockId, @LockDate, @Data, @Flags)",
+                                                      "INSERT INTO \"{0}\" (\"SessionId\", \"Created\", \"Expires\", \"Timeout\", \"Locked\", \"LockId\", \"LockDate\", \"Data\", \"Flags\") Values (@SessionId, @Created, @Expires, @Timeout, @Locked, @LockId, @LockDate, @Data, @Flags)",
                                                       s_tableName);
 
                 dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
                 dbCommand.Parameters.Add("@Created", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
                 dbCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now.AddMinutes((Double) timeout);
                 dbCommand.Parameters.Add("@Timeout", NpgsqlDbType.Integer).Value = timeout;
@@ -585,11 +575,10 @@ namespace NauckIT.PostgreSQLProvider
             using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
             {
                 dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture,
-                                                      "UPDATE \"{0}\" SET \"Created\" = @Created, \"Expires\" = @Expires, \"Timeout\" = @Timeout, \"Locked\" = @Locked, \"LockId\" = @LockId, \"LockDate\" = @LockDate, \"Data\" = @Data, \"Flags\" = @Flags WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName",
+                                                      "UPDATE \"{0}\" SET \"Created\" = @Created, \"Expires\" = @Expires, \"Timeout\" = @Timeout, \"Locked\" = @Locked, \"LockId\" = @LockId, \"LockDate\" = @LockDate, \"Data\" = @Data, \"Flags\" = @Flags WHERE \"SessionId\" = @SessionId",
                                                       s_tableName);
 
                 dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
                 dbCommand.Parameters.Add("@Created", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
                 dbCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now.AddMinutes((Double)timeout);
                 dbCommand.Parameters.Add("@Timeout", NpgsqlDbType.Integer).Value = timeout;
@@ -670,10 +659,9 @@ namespace NauckIT.PostgreSQLProvider
                     // Retrieve the current session item information and lock row
                     using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                     {
-                        dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Expires\", \"Timeout\", \"Locked\", \"LockId\", \"LockDate\", \"Data\", \"Flags\" FROM \"{0}\" WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName FOR UPDATE", s_tableName);
+                        dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"Expires\", \"Timeout\", \"Locked\", \"LockId\", \"LockDate\", \"Data\", \"Flags\" FROM \"{0}\" WHERE \"SessionId\" = @SessionId FOR UPDATE", s_tableName);
 
                         dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                        dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                         using (NpgsqlDataReader reader = dbCommand.ExecuteReader(System.Data.CommandBehavior.SingleRow))
                         {
@@ -710,14 +698,13 @@ namespace NauckIT.PostgreSQLProvider
                         // Obtain a lock to the record
                         using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                         {
-                            dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Locked\" = @Locked, \"LockId\" = @LockId,\"LockDate\" = @LockDate, \"Flags\" = @Flags WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName", s_tableName);
+                            dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "UPDATE \"{0}\" SET \"Locked\" = @Locked, \"LockId\" = @LockId,\"LockDate\" = @LockDate, \"Flags\" = @Flags WHERE \"SessionId\" = @SessionId", s_tableName);
 
                             dbCommand.Parameters.Add("@Locked", NpgsqlDbType.Boolean).Value = true;
                             dbCommand.Parameters.Add("@LockId", NpgsqlDbType.Integer).Value = lockId;
                             dbCommand.Parameters.Add("@LockDate", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
                             dbCommand.Parameters.Add("@Flags", NpgsqlDbType.Integer).Value = 0;
                             dbCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80).Value = id;
-                            dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                             dbCommand.ExecuteNonQuery();
                         }
@@ -842,10 +829,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand selectCommand = dbConn.CreateCommand())
                 {
-                    selectCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"SessionId\", \"Data\" FROM \"{0}\" WHERE \"Expires\" < @Expires AND \"ApplicationName\" = @ApplicationName", s_tableName);
+                    selectCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "SELECT \"SessionId\", \"Data\" FROM \"{0}\" WHERE \"Expires\" < @Expires", s_tableName);
 
                     selectCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
-                    selectCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     try
                     {
@@ -884,10 +870,9 @@ namespace NauckIT.PostgreSQLProvider
 
                 using (NpgsqlCommand deleteCommand = dbConn.CreateCommand())
                 {
-                    deleteCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"SessionId\" = @SessionId AND \"ApplicationName\" = @ApplicationName", s_tableName);
+                    deleteCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"SessionId\" = @SessionId", s_tableName);
 
                     deleteCommand.Parameters.Add("@SessionId", NpgsqlDbType.Varchar, 80);
-                    deleteCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     NpgsqlTransaction dbTrans = null;
 
@@ -953,10 +938,9 @@ namespace NauckIT.PostgreSQLProvider
             {
                 using (NpgsqlCommand dbCommand = dbConn.CreateCommand())
                 {
-                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"Expires\" < @Expires AND \"ApplicationName\" = @ApplicationName", s_tableName);
+                    dbCommand.CommandText = string.Format(CultureInfo.InvariantCulture, "DELETE FROM \"{0}\" WHERE \"Expires\" < @Expires", s_tableName);
 
                     dbCommand.Parameters.Add("@Expires", NpgsqlDbType.TimestampTZ).Value = DateTime.Now;
-                    dbCommand.Parameters.Add("@ApplicationName", NpgsqlDbType.Varchar, 255).Value = m_applicationName;
 
                     NpgsqlTransaction dbTrans = null;
 
